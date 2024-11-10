@@ -1,19 +1,97 @@
-{% extends "templates/layout.html" %} 
-{% block title %}Sistema - Broto Fácil{% endblock %} 
+{% extends "templates/layout.html" %}
+{% block title %}Sistema - Broto Fácil{% endblock %}
 {% block content %}
 
-<div class="container box-access overflow-hidden">
-  <div class="row">
-    <div class="col-md-6 p-0 d-flex align-items-center justify-content-center">
-      <img src="{{ url_for('static', filename='broto.jpg') }}" alt="Imagem background" class="img-fluid" />
-    </div>
+<style>
+  /* Estilos gerais */
+  .container-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin: 1rem;
+    place-items: center;
+    border-radius: 1rem;
+    background-color: #fff;
+  }
 
-    <div class="col-md-6 d-flex flex-column align-items-center justify-content-center text-center p-2">
-      <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo" />
-      <h1 class="title mt-0">Sistema de Monitoramento Broto Fácil</h1>
-      <p class="description">Veja a temperatura e umidade de sua planta.</p>
-      <a class="btn btn-custom" href="{{ url_for('auth.login') }}">Acessar Dashboard</a>
-    </div>
+  .image-section,
+  .content-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .font18rem {
+    font-size: 1.8rem;
+  }
+
+  .content-section {
+    padding: 0 .5rem 1.5rem .5rem;
+  }
+
+  /* Estilo para o gradiente na versão mobile */
+  .image-section::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0), #fff);
+    border-radius: 1rem;
+    z-index: 1;
+  }
+
+  .image-section img {
+    width: 100%;
+    border-radius: 1rem;
+    z-index: 0;
+  }
+
+  /* Estilo específico para versão desktop */
+  @media (min-width: 768px) {
+    .container-grid {
+      grid-template-columns: 1fr 1fr;
+      height: calc(100vh - 10rem);
+      margin: 5rem;
+      background-color: #fff;
+      padding: 0;
+      border-radius: 1rem;
+    }
+
+    .image-section {
+      justify-content: end;
+      height: 100%;
+    }
+
+    .image-section img {
+      border-radius: 1rem 0 0 1rem;
+    }
+
+    /* Remove o gradiente na versão desktop */
+    .image-section::before {
+      display: none;
+    }
+
+    .content-section {
+      justify-content: start;
+      padding: 1rem;
+    }
+  }
+</style>
+
+<div class="container-grid">
+  <!-- Coluna para a imagem com gradiente na versão mobile -->
+  <div class="image-section">
+    <img src="{{ url_for('static', filename='broto.jpg') }}" alt="Imagem background" class="img-fluid" />
+  </div>
+
+  <!-- Coluna para o conteúdo do texto e botão -->
+  <div class="content-section">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo" />
+    <h1 class="title font18rem mt-0">Sistema de Monitoramento Broto Fácil</h1>
+    <p class="description">Monitore a saúde da sua planta em tempo real: veja temperatura, umidade, luminosidade e umidade do solo, ajustando o ambiente conforme necessário.</p>
+    <a class="btn btn-custom" href="{{ url_for('auth.login') }}">Acessar Dashboard</a>
   </div>
 </div>
 

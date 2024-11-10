@@ -2,7 +2,7 @@
   endblock %} {% block content %}
   
   <nav class="navbar navbar-expand-lg position-fixed w-100 " style="z-index: 99999;background-color: rgb(237 249 249);">
-    <div class="container-sm">
+    <div class="container-sm m-0">
       <div style="gap: 12px;" class="d-flex gap-3 align-items-center">
         <div class="p-2 rounded-circle d-flex justify-content-center align-items-center"
           style="height: 40px;width: 40px;box-shadow: -3px 2px 10px 1px rgba(0, 0, 0, 0.15) !important;">
@@ -38,99 +38,83 @@
     </div>
   
 
-
-    <h1>Controle de Sensores</h1>
+    <h2 style="padding-bottom: 1rem;">Controle de Sensores</h2>
 
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" id="dht-switch" onchange="toggleSensor('dht')">
       <label class="form-check-label fw-semibold" id="dht-label" for="dht-switch">
           Sensor DHT: <span class="status-label">Ligado</span>
       </label>
-  </div>
+    </div>
   
-  <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="luz-switch" onchange="toggleSensor('luz')">
-      <label class="form-check-label fw-semibold" id="luz-label" for="luz-switch">
-          Sensor Luminosidade: <span class="status-label">Ligado</span>
-      </label>
-  </div>
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="luz-switch" onchange="toggleSensor('luz')">
+        <label class="form-check-label fw-semibold" id="luz-label" for="luz-switch">
+            Sensor Luminosidade: <span class="status-label">Ligado</span>
+        </label>
+    </div>
   
-  <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="solo-switch" onchange="toggleSensor('solo')">
-      <label class="form-check-label fw-semibold" id="solo-label" for="solo-switch">
-          Sensor Solo: <span class="status-label">Ligado</span>
-      </label>
-  </div>
+    <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="solo-switch" onchange="toggleSensor('solo')">
+        <label class="form-check-label fw-semibold" id="solo-label" for="solo-switch">
+            Sensor Solo: <span class="status-label">Ligado</span>
+        </label>
+    </div>
   
-  <style>
-      /* Estilos para os rótulos de status */
-      .status-label {
-          padding: 2px 6px;
-          color: white;
-          border-radius: 4px;
-      }
-      .status-label.ligado {
-          background-color: green;
-      }
-      .status-label.desligado {
-          background-color: red;
-      }
-  </style>
-  
-  <script>
-      function toggleSensor(sensor) {
-          fetch('/toggle_sensor', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ sensor: sensor })
-          })
-          .then(response => response.json())
-          .then(data => {
-              if (data.success) {
-                  updateSwitchState(sensor, data.state);
-              } else {
-                  alert('Erro ao alternar o sensor.');
-              }
-          })
-          .catch(error => console.error('Erro:', error));
-      }
-      
-      function updateSwitchState(sensor, state) {
-          const switchElement = document.getElementById(`${sensor}-switch`);
-          const labelElement = document.getElementById(`${sensor}-label`);
-          const statusLabel = labelElement.querySelector('.status-label');
-  
-          switchElement.checked = state; // Atualiza o estado do checkbox
-          statusLabel.innerText = state ? 'Ligado' : 'Desligado';
-          
-          // Atualiza a classe de estilo de acordo com o estado
-          if (state) {
-              statusLabel.classList.add('ligado');
-              statusLabel.classList.remove('desligado');
-          } else {
-              statusLabel.classList.add('desligado');
-              statusLabel.classList.remove('ligado');
-          }
-      }
-      
-      function loadSensorStates() {
-          fetch('/estado_sensores')
-          .then(response => response.json())
-          .then(data => {
-              for (const sensor in data) {
-                  if (data.hasOwnProperty(sensor)) {
-                      updateSwitchState(sensor, data[sensor]);
-                  }
-              }
-          })
-          .catch(error => console.error('Erro ao carregar o estado dos sensores:', error));
-      }
-      
-      window.onload = loadSensorStates;
-  </script>
-  
+    <script>
+        function toggleSensor(sensor) {
+            fetch('/toggle_sensor', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ sensor: sensor })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateSwitchState(sensor, data.state);
+                } else {
+                    alert('Erro ao alternar o sensor.');
+                }
+            })
+            .catch(error => console.error('Erro:', error));
+        }
+        
+        function updateSwitchState(sensor, state) {
+            const switchElement = document.getElementById(`${sensor}-switch`);
+            const labelElement = document.getElementById(`${sensor}-label`);
+            const statusLabel = labelElement.querySelector('.status-label');
+    
+            switchElement.checked = state; // Atualiza o estado do checkbox
+            statusLabel.innerText = state ? 'Ligado' : 'Desligado';
+            
+            // Atualiza a classe de estilo de acordo com o estado
+            if (state) {
+                statusLabel.classList.add('ligado');
+                statusLabel.classList.remove('desligado');
+            } else {
+                statusLabel.classList.add('desligado');
+                statusLabel.classList.remove('ligado');
+            }
+        }
+        
+        function loadSensorStates() {
+            fetch('/estado_sensores')
+            .then(response => response.json())
+            .then(data => {
+                for (const sensor in data) {
+                    if (data.hasOwnProperty(sensor)) {
+                        updateSwitchState(sensor, data[sensor]);
+                    }
+                }
+            })
+            .catch(error => console.error('Erro ao carregar o estado dos sensores:', error));
+        }
+        
+        window.onload = loadSensorStates;
+    </script>
+    
 
     <p style="border: 1px solid #66a404; margin-top: 2rem;"></p>
     <h1 class="title">Dashboard</h1>
@@ -213,8 +197,8 @@
     </div>
   
     <div class="mt-5 w-100">
-    <span class="fw-semibold">Filtrar</span>
-    <div class="d-flex gap-2 container-button-data-filter py-4">
+    <h2 class="fw-semibold">Filtrar</h2>
+    <div class="d-flex gap-2 container-button-data-filter py-2">
       
       <div class="container-button" >
       <button onclick="openContainerData('container-temperatura')" class="btn rounded-4 d-flex flex-column gap-3 align-items-center justify-content-center">

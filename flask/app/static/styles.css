@@ -51,6 +51,10 @@ body {
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
+.bsn {
+    box-shadow: none;
+}
+
 img {
     max-width: 100%;
     object-fit: cover;
@@ -115,9 +119,6 @@ img {
     background-color: var(--secondary-color);
     color: var(--white-color);
 }
-
-
-.box-access {}
 
 .cta-part {
     padding: 1rem 0;
@@ -221,4 +222,16 @@ img {
 .btn-second-gray:hover {
     background-color: #565656;
     color: #fff;
+}
+
+.status-label {
+    padding: 2px 6px;
+    color: white;
+    border-radius: 4px;
+}
+.status-label.ligado {
+    background-color: green;
+}
+.status-label.desligado {
+    background-color: red;
 }
