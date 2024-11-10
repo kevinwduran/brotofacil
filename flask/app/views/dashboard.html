@@ -23,75 +23,116 @@
       </a>
   </nav>
   
-  <div class="container-sm" style="padding-top: 70px;">
-    <div id="alertContainer" class="alert alert-warning alert-dismissible fade show d-none" role="alert">
-      A umidade do solo está abaixo do limite recomendado!
+  <div class="container-sm" style="padding-top: 5rem;">
+    <div id="alertContainerAr" class="alert alert-warning alert-dismissible fade show d-none" role="alert">
+      A <strong>%</strong> de umidade do ar está abaixo de 30%!<br>Atente-se e regue suas plantas.
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-
+    <div id="alertContainer" class="alert alert-danger alert-dismissible fade show d-none" role="alert">
+      A <strong>%</strong> de umidade do solo está abaixo de 30%!<br>Recomenda-se regar suas plantas.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     <div id="alertContainerLuz" class="alert alert-warning alert-dismissible fade show d-none" role="alert">
-      A % de luminosidade está abaixo de 30%!
+      A <strong>%</strong> de luminosidade está abaixo de 30%!
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
+  
 
 
     <h1>Controle de Sensores</h1>
-    <button id="dht-btn" onclick="toggleSensor('dht')">Toggle DHT</button>
-    <button id="luz-btn" onclick="toggleSensor('luz')">Toggle Luminosidade</button>
-    <button id="solo-btn" onclick="toggleSensor('solo')">Toggle Solo</button>
-    <script>
-    // Função para alternar o estado do sensor
-    function toggleSensor(sensor) {
-        fetch('/toggle_sensor', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ sensor: sensor })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(`Sensor ${sensor} agora está ${data.state ? 'ligado' : 'desligado'}.`);
-                // Atualiza o estado do botão
-                updateButtonState(sensor, data.state);
-            } else {
-                alert('Erro ao alternar o sensor.');
-            }
-        })
-        .catch(error => console.error('Erro:', error));
-    }
-    
-    // Função para atualizar visualmente o estado do botão
-    function updateButtonState(sensor, state) {
-        const button = document.getElementById(`${sensor}-btn`);
-        if (state) {
-            button.style.backgroundColor = 'green'; // Quando ligado
-            button.innerText = `Desligar ${sensor}`;
-        } else {
-            button.style.backgroundColor = 'red'; // Quando desligado
-            button.innerText = `Ligar ${sensor}`;
-        }
-    }
-    
-    // Função para carregar o estado atual dos sensores ao carregar a página
-    function loadSensorStates() {
-        fetch('/estado_sensores')
-        .then(response => response.json())
-        .then(data => {
-            for (const sensor in data) {
-                if (data.hasOwnProperty(sensor)) {
-                    updateButtonState(sensor, data[sensor]);
-                }
-            }
-        })
-        .catch(error => console.error('Erro ao carregar o estado dos sensores:', error));
-    }
-    
-    // Carregar os estados ao inicializar a página
-    window.onload = loadSensorStates;
-    </script>
+
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="dht-switch" onchange="toggleSensor('dht')">
+      <label class="form-check-label fw-semibold" id="dht-label" for="dht-switch">
+          Sensor DHT: <span class="status-label">Ligado</span>
+      </label>
+  </div>
   
+  <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="luz-switch" onchange="toggleSensor('luz')">
+      <label class="form-check-label fw-semibold" id="luz-label" for="luz-switch">
+          Sensor Luminosidade: <span class="status-label">Ligado</span>
+      </label>
+  </div>
+  
+  <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="solo-switch" onchange="toggleSensor('solo')">
+      <label class="form-check-label fw-semibold" id="solo-label" for="solo-switch">
+          Sensor Solo: <span class="status-label">Ligado</span>
+      </label>
+  </div>
+  
+  <style>
+      /* Estilos para os rótulos de status */
+      .status-label {
+          padding: 2px 6px;
+          color: white;
+          border-radius: 4px;
+      }
+      .status-label.ligado {
+          background-color: green;
+      }
+      .status-label.desligado {
+          background-color: red;
+      }
+  </style>
+  
+  <script>
+      function toggleSensor(sensor) {
+          fetch('/toggle_sensor', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ sensor: sensor })
+          })
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  updateSwitchState(sensor, data.state);
+              } else {
+                  alert('Erro ao alternar o sensor.');
+              }
+          })
+          .catch(error => console.error('Erro:', error));
+      }
+      
+      function updateSwitchState(sensor, state) {
+          const switchElement = document.getElementById(`${sensor}-switch`);
+          const labelElement = document.getElementById(`${sensor}-label`);
+          const statusLabel = labelElement.querySelector('.status-label');
+  
+          switchElement.checked = state; // Atualiza o estado do checkbox
+          statusLabel.innerText = state ? 'Ligado' : 'Desligado';
+          
+          // Atualiza a classe de estilo de acordo com o estado
+          if (state) {
+              statusLabel.classList.add('ligado');
+              statusLabel.classList.remove('desligado');
+          } else {
+              statusLabel.classList.add('desligado');
+              statusLabel.classList.remove('ligado');
+          }
+      }
+      
+      function loadSensorStates() {
+          fetch('/estado_sensores')
+          .then(response => response.json())
+          .then(data => {
+              for (const sensor in data) {
+                  if (data.hasOwnProperty(sensor)) {
+                      updateSwitchState(sensor, data[sensor]);
+                  }
+              }
+          })
+          .catch(error => console.error('Erro ao carregar o estado dos sensores:', error));
+      }
+      
+      window.onload = loadSensorStates;
+  </script>
+  
+
+    <p style="border: 1px solid #66a404; margin-top: 2rem;"></p>
     <h1 class="title">Dashboard</h1>
     
     <div class="d-flex justify-content-start align-items-center gap-2 mt-3 mb-3">
@@ -142,9 +183,7 @@
         </ul>
       </div>
     </div>
-    </div>
-  
-  
+
     <!-- Gráficos Resumo -->
     <div class="row">
       <div class="col-6 col-md-4 col-lg-3 mt-3">
@@ -174,8 +213,8 @@
     </div>
   
     <div class="mt-5 w-100">
-    <span>Dados do filtro</span>
-    <div class="d-flex gap-2 container-button-data-filter">
+    <span class="fw-semibold">Filtrar</span>
+    <div class="d-flex gap-2 container-button-data-filter py-4">
       
       <div class="container-button" >
       <button onclick="openContainerData('container-temperatura')" class="btn rounded-4 d-flex flex-column gap-3 align-items-center justify-content-center">
@@ -237,6 +276,10 @@
     </div>
   </div>
   </div>
+    </div>
+  
+  
+    
   
   <script>
     let containerTemperatura = document.querySelector('.container-temperatura');
@@ -257,15 +300,6 @@
       containerUmidadeSolo.classList.add('d-none');
     }
   </script>
-  
-    <!-- Gráfico de Umidade do Solo -->
-    <div class="row mt-3">
-      <div class="col">
-        <h3>Umidade do Solo (%)</h3>
-        <canvas id="chartUmidadeSolo" class="chart-big"></canvas>
-      </div>
-    </div>
-  </div>
   
   
   <!-- Estilos CSS -->
@@ -298,6 +332,14 @@
     const ultimaUmidade = dataFromBackend.umidades[dataFromBackend.umidades.length - 1];
     const ultimaLuminosidade = dataFromBackend.luminosidades[dataFromBackend.luminosidades.length - 1];
     const ultimaUmidadeSolo = dataFromBackend.umidadesolos[dataFromBackend.umidadesolos.length - 1];
+
+    // Exemplo de limite de umidade do solo para mostrar o alerta
+    const limiteUmidadeAr = 30;  // Defina o valor do limite (em %)
+    // Verifique o valor da última umidade do solo e exiba o alerta, se necessário
+    if (ultimaUmidade < limiteUmidadeAr) {
+      const alertContainerAr = document.getElementById('alertContainerAr');
+      alertContainerAr.classList.remove('d-none');  // Exibe o alerta
+    }
 
     // Exemplo de limite de umidade do solo para mostrar o alerta
     const limiteUmidadeSolo = 30;  // Defina o valor do limite (em %)
