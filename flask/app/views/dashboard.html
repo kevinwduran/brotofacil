@@ -1,0 +1,495 @@
+{% extends "templates/layout.html" %} {% block title %}Dashboard - Broto Fácil{%
+  endblock %} {% block content %}
+  
+  <nav class="navbar navbar-expand-lg position-fixed w-100 " style="z-index: 99999;background-color: rgb(237 249 249);">
+    <div class="container-sm">
+      <div style="gap: 12px;" class="d-flex gap-3 align-items-center">
+        <div class="p-2 rounded-circle d-flex justify-content-center align-items-center"
+          style="height: 40px;width: 40px;box-shadow: -3px 2px 10px 1px rgba(0, 0, 0, 0.15) !important;">
+          <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="w-100 object-contan" />
+        </div>
+        <div class="d-flex flex-column">
+          <span class="font-12px opacity-75 text-success">
+            Seja bem vindo
+          </span>
+          <span class="fw-semibold">
+            {{user.username}}
+          </span>
+        </div>
+      </div>
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-second p-2 rounded-circle position-relative"
+        style="height: 56px;width:56px" type="button">
+        <i class="fa-solid fa-xl fa-arrows-rotate absolute-center"></i>
+      </a>
+  </nav>
+  
+  <div class="container-sm" style="padding-top: 70px;">
+    <div id="alertContainer" class="alert alert-warning alert-dismissible fade show d-none" role="alert">
+      A umidade do solo está abaixo do limite recomendado!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div id="alertContainerLuz" class="alert alert-warning alert-dismissible fade show d-none" role="alert">
+      A % de luminosidade está abaixo de 30%!
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+
+    <h1>Controle de Sensores</h1>
+    <button id="dht-btn" onclick="toggleSensor('dht')">Toggle DHT</button>
+    <button id="luz-btn" onclick="toggleSensor('luz')">Toggle Luminosidade</button>
+    <button id="solo-btn" onclick="toggleSensor('solo')">Toggle Solo</button>
+    <script>
+    // Função para alternar o estado do sensor
+    function toggleSensor(sensor) {
+        fetch('/toggle_sensor', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ sensor: sensor })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Sensor ${sensor} agora está ${data.state ? 'ligado' : 'desligado'}.`);
+                // Atualiza o estado do botão
+                updateButtonState(sensor, data.state);
+            } else {
+                alert('Erro ao alternar o sensor.');
+            }
+        })
+        .catch(error => console.error('Erro:', error));
+    }
+    
+    // Função para atualizar visualmente o estado do botão
+    function updateButtonState(sensor, state) {
+        const button = document.getElementById(`${sensor}-btn`);
+        if (state) {
+            button.style.backgroundColor = 'green'; // Quando ligado
+            button.innerText = `Desligar ${sensor}`;
+        } else {
+            button.style.backgroundColor = 'red'; // Quando desligado
+            button.innerText = `Ligar ${sensor}`;
+        }
+    }
+    
+    // Função para carregar o estado atual dos sensores ao carregar a página
+    function loadSensorStates() {
+        fetch('/estado_sensores')
+        .then(response => response.json())
+        .then(data => {
+            for (const sensor in data) {
+                if (data.hasOwnProperty(sensor)) {
+                    updateButtonState(sensor, data[sensor]);
+                }
+            }
+        })
+        .catch(error => console.error('Erro ao carregar o estado dos sensores:', error));
+    }
+    
+    // Carregar os estados ao inicializar a página
+    window.onload = loadSensorStates;
+    </script>
+  
+    <h1 class="title">Dashboard</h1>
+    
+    <div class="d-flex justify-content-start align-items-center gap-2 mt-3 mb-3">
+      <a href="{{ url_for('api.exportar_csv') }}" class="btn btn-second-gray"
+        ><i class="fa-solid fa-file-arrow-down fa-lg me-1"></i> CSV</a
+      >
+  
+      <div class="dropdown">
+        
+        <button
+          class="btn btn-second-gray dropdown-toggle"
+          type="button"
+          id="filterButton"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          Período
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="filterButton">
+          <li>
+            <a
+              class="dropdown-item"
+              href="{{ url_for('dashboard.dashboard', filtro='1hora') }}"
+              >Última 1 hora</a
+            >
+          </li>
+          <li>
+            <a
+              class="dropdown-item"
+              href="{{ url_for('dashboard.dashboard', filtro='1dia') }}"
+              >Último 1 dia</a
+            >
+          </li>
+          <li>
+            <a
+              class="dropdown-item"
+              href="{{ url_for('dashboard.dashboard', filtro='7dias') }}"
+              >Últimos 7 dias</a
+            >
+          </li>
+          <li>
+            <a
+              class="dropdown-item"
+              href="{{ url_for('dashboard.dashboard', filtro='1mes') }}"
+              >Último 1 mês</a
+            >
+          </li>
+        </ul>
+      </div>
+    </div>
+    </div>
+  
+  
+    <!-- Gráficos Resumo -->
+    <div class="row">
+      <div class="col-6 col-md-4 col-lg-3 mt-3">
+        <div class="bg-white rounded-5 p-3 text-center h-100">
+        <span class="fw-semibold">Temperatura (°C)</span>
+        <canvas id="chartTempResumo" class="chart"></canvas>
+        </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3 mt-3">
+        <div class="bg-white rounded-5 p-3 text-center h-100">
+        <span class="fw-semibold">Umidade (%)</span>
+        <canvas id="chartUmidadeResumo" class="chart"></canvas>
+      </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3 mt-3">
+        <div class="bg-white rounded-5 p-3 text-center h-100">
+        <span class="fw-semibold">Luminosidade (%)</span>
+        <canvas id="chartLumResumo" class="chart"></canvas>
+      </div>
+      </div>
+      <div class="col-6 col-md-4 col-lg-3 mt-3">
+        <div class="bg-white rounded-5 p-3 text-center h-100">
+        <span class="fw-semibold">Umidade do Solo (%)</span>
+        <canvas id="chartUmidadeSoloResumo" class="chart"></canvas>
+      </div>
+      </div>
+    </div>
+  
+    <div class="mt-5 w-100">
+    <span>Dados do filtro</span>
+    <div class="d-flex gap-2 container-button-data-filter">
+      
+      <div class="container-button" >
+      <button onclick="openContainerData('container-temperatura')" class="btn rounded-4 d-flex flex-column gap-3 align-items-center justify-content-center">
+        <img src="{{ url_for('static', filename='icons/thermometer_1f321-fe0f.png') }}" class="w-100" style="object-fit:contain!important" />
+        <span class="font-12px">Temp.</span>
+      </button>
+    </div>
+  
+    <div class="container-button" >
+      <button onclick="openContainerData('container-umidade')" class="btn rounded-4 d-flex flex-column gap-3 align-items-center justify-content-center">
+        <img src="{{ url_for('static', filename='icons/sweat-droplets_1f4a6.png') }}" class="w-100" style="object-fit:contain!important" />
+        <span class="font-12px">Umid.</span>
+      </button>
+    </div>
+  
+      <div class="container-button" >
+      <button onclick="openContainerData('container-luminosidade')" class="btn rounded-4 d-flex flex-column gap-3 align-items-center justify-content-center">
+        <img src="{{ url_for('static', filename='icons/sun_2600-fe0f.png') }}" class="w-100" style="object-fit:contain!important" />
+        <span class="font-12px">Lumi.</span>
+      </button>
+    </div>
+  
+      <div class="container-button" >
+      <button onclick="openContainerData('container-umidade-solo')" class="btn rounded-4 d-flex flex-column gap-3 align-items-center justify-content-center">
+        <img src="{{ url_for('static', filename='icons/herb_1f33f.png') }}"class="w-100" style="object-fit:contain!important" />
+        <span class="font-12px">Umi. Solo</span>
+      </button>
+    </div>
+  
+    </div>
+  </div>
+  
+  <div class="bg-white rounded-5 py-3 px-2 px-md-3 mt-2">
+  <div class="row mt-3 container-temperatura">
+    <div class="col">
+      <h3>Temperatura (°C)</h3>
+      <canvas id="chartTemperatura" class="chart-big"></canvas>
+    </div>
+  </div>
+  
+  <div class="row mt-3 container-umidade d-none">
+    <div class="col">
+      <h3>Umidade (%)</h3>
+      <canvas id="chartUmidade" class="chart-big"></canvas>
+    </div>
+  </div>
+  
+  <div class="row mt-3 container-luminosidade d-none">
+    <div class="col">
+      <h3>Luminosidade (%)</h3>
+      <canvas id="chartLuminosidade" class="chart-big"></canvas>
+    </div>
+  </div>
+  
+  <div class="row mt-3 container-umidade-solo d-none">
+    <div class="col">
+      <h3>Umidade do Solo (%)</h3>
+      <canvas id="chartUmidadeSolo" class="chart-big"></canvas>
+    </div>
+  </div>
+  </div>
+  
+  <script>
+    let containerTemperatura = document.querySelector('.container-temperatura');
+    let containerUmidade = document.querySelector('.container-umidade');
+    let containerLuminosidade = document.querySelector('.container-luminosidade');
+    let containerUmidadeSolo = document.querySelector('.container-umidade-solo');
+  
+    function openContainerData(container){
+      closeContainersData();
+      console.log(container)
+      document.querySelector(`.${container}`).classList.remove('d-none');
+    }
+  
+    function closeContainersData(){
+      containerTemperatura.classList.add('d-none');
+      containerUmidade.classList.add('d-none');
+      containerLuminosidade.classList.add('d-none');
+      containerUmidadeSolo.classList.add('d-none');
+    }
+  </script>
+  
+    <!-- Gráfico de Umidade do Solo -->
+    <div class="row mt-3">
+      <div class="col">
+        <h3>Umidade do Solo (%)</h3>
+        <canvas id="chartUmidadeSolo" class="chart-big"></canvas>
+      </div>
+    </div>
+  </div>
+  
+  
+  <!-- Estilos CSS -->
+  <script>
+    // Captura o evento de clique no dropdown e redireciona para a rota com o filtro correto
+    document.querySelectorAll(".dropdown-item").forEach((item) => {
+      item.addEventListener("click", function () {
+        const filterDays = this.getAttribute("data-filter"); // Obtém o valor de filtro (1, 7 ou 30)
+        window.location.href = `/dashboard?days=${filterDays}`;
+      });
+    });
+  </script>
+  
+  <!-- Biblioteca Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Script de configuração dos gráficos -->
+  <script>
+    // Dados vindos do backend
+    const dataFromBackend = {
+      timestamps: {{ timestamps | tojson | safe }},
+      temperaturas: {{ temperaturas | tojson | safe }},
+      umidades: {{ umidades | tojson | safe }},
+      luminosidades: {{ luminosidades | tojson | safe }},
+      umidadesolos: {{ umidadesolos | tojson | safe }}
+    };
+  
+    // Obter o último valor de cada conjunto de dados
+    const ultimaTemperatura = dataFromBackend.temperaturas[dataFromBackend.temperaturas.length - 1];
+    const ultimaUmidade = dataFromBackend.umidades[dataFromBackend.umidades.length - 1];
+    const ultimaLuminosidade = dataFromBackend.luminosidades[dataFromBackend.luminosidades.length - 1];
+    const ultimaUmidadeSolo = dataFromBackend.umidadesolos[dataFromBackend.umidadesolos.length - 1];
+
+    // Exemplo de limite de umidade do solo para mostrar o alerta
+    const limiteUmidadeSolo = 30;  // Defina o valor do limite (em %)
+    // Verifique o valor da última umidade do solo e exiba o alerta, se necessário
+    if (ultimaUmidadeSolo < limiteUmidadeSolo) {
+      const alertContainer = document.getElementById('alertContainer');
+      alertContainer.classList.remove('d-none');  // Exibe o alerta
+    }
+
+    const limiteLuminosidade = 30
+    if (ultimaLuminosidade < limiteLuminosidade) {
+      const alertContainerLuz = document.getElementById('alertContainerLuz');
+      alertContainerLuz.classList.remove('d-none');  // Exibe o alerta
+    }
+  
+    // Plugin para desenhar texto no centro do gráfico
+    const centerTextPlugin = {
+      id: 'centerText',
+      afterDraw(chart) {
+        const ctx = chart.ctx;
+        const data = chart.data.datasets[0].data;
+        const total = data.reduce((acc, val) => acc + val, 0);
+        const centerValue = Math.round(data[0]); // Apenas o valor do gráfico
+  
+        ctx.save();
+        ctx.font = 'bold 14px Arial';
+        ctx.fillStyle = 'black'; // Cor do texto
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(centerValue, chart.width / 2, chart.height / 2);
+        ctx.restore();
+      }
+    };
+  
+    // Gráfico Circular de Temperatura
+    const ctxTempResumo = document.getElementById('chartTempResumo').getContext('2d');
+    new Chart(ctxTempResumo, {
+      type: 'doughnut',
+      data: {
+        labels: ['Temperatura'],
+        datasets: [{
+          data: [ultimaTemperatura, 100 - ultimaTemperatura],
+          backgroundColor: ['rgba(102, 164, 4, 1)', 'rgba(200, 200, 200, 0.3)'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          centerText: true // Adiciona o plugin
+        }
+      },
+      plugins: [centerTextPlugin] // Registra o plugin
+    });
+  
+    // Gráfico Circular de Umidade
+    const ctxUmidadeResumo = document.getElementById('chartUmidadeResumo').getContext('2d');
+    new Chart(ctxUmidadeResumo, {
+      type: 'doughnut',
+      data: {
+        labels: ['Umidade'],
+        datasets: [{
+          data: [ultimaUmidade, 100 - ultimaUmidade],
+          backgroundColor: ['rgba(255, 215, 89, 1)', 'rgba(200, 200, 200, 0.3)'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          centerText: true // Adiciona o plugin
+        }
+      },
+      plugins: [centerTextPlugin] // Registra o plugin
+    });
+  
+    // Gráfico Circular de Luminosidade
+    const ctxLumResumo = document.getElementById('chartLumResumo').getContext('2d');
+    new Chart(ctxLumResumo, {
+      type: 'doughnut',
+      data: {
+        labels: ['Luminosidade'],
+        datasets: [{
+          data: [ultimaLuminosidade, 100 - ultimaLuminosidade],
+          backgroundColor: ['rgba(255, 87, 51, 1)', 'rgba(200, 200, 200, 0.3)'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          centerText: true // Adiciona o plugin
+        }
+      },
+      plugins: [centerTextPlugin] // Registra o plugin
+    });
+  
+    // Gráfico Circular de Umidade do Solo
+    const ctxUmidadeSoloResumo = document.getElementById('chartUmidadeSoloResumo').getContext('2d');
+    new Chart(ctxUmidadeSoloResumo, {
+      type: 'doughnut',
+      data: {
+        labels: ['Umidade do Solo'],
+        datasets: [{
+          data: [ultimaUmidadeSolo, 100 - ultimaUmidadeSolo],
+          backgroundColor: ['rgba(3, 38, 3, 1)', 'rgba(200, 200, 200, 0.3)'],
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          centerText: true // Adiciona o plugin
+        }
+      },
+      plugins: [centerTextPlugin] // Registra o plugin
+    });
+  
+    // Gráfico de Temperatura
+    const ctxTemp = document.getElementById('chartTemperatura').getContext('2d');
+    new Chart(ctxTemp, {
+      type: 'line',
+      data: {
+        labels: dataFromBackend.timestamps,
+        datasets: [{
+          label: 'Temperatura (°C)',
+          data: dataFromBackend.temperaturas,
+          borderColor: 'rgba(102, 164, 4, 1)',
+          backgroundColor: 'rgba(102, 164, 4, 0.5)',
+          fill: false,
+          tension: 0.4
+        }]
+      }
+    });
+  
+    // Gráfico de Umidade
+    const ctxUmidade = document.getElementById('chartUmidade').getContext('2d');
+    new Chart(ctxUmidade, {
+      type: 'bar',
+      data: {
+        labels: dataFromBackend.timestamps,
+        datasets: [{
+          label: 'Umidade (%)',
+          data: dataFromBackend.umidades,
+          borderColor: 'rgba(255, 215, 89, 1)',
+          backgroundColor: 'rgba(255, 215, 89, 0.5)'
+        }]
+      }
+    });
+  
+    // Gráfico de Luminosidade
+    const ctxLum = document.getElementById('chartLuminosidade').getContext('2d');
+    new Chart(ctxLum, {
+      type: 'bar',
+      data: {
+        labels: dataFromBackend.timestamps,
+        datasets: [{
+          label: 'Luminosidade (%)',
+          data: dataFromBackend.luminosidades,
+          borderColor: 'rgba(255, 87, 51, 1)',
+          backgroundColor: 'rgba(255, 87, 51, 0.5)'
+        }]
+      }
+    });
+  
+    // Gráfico de Umidade do Solo
+    const ctxUmidadeSolo = document.getElementById('chartUmidadeSolo').getContext('2d');
+    new Chart(ctxUmidadeSolo, {
+      type: 'bar',
+      data: {
+        labels: dataFromBackend.timestamps,
+        datasets: [{
+          label: 'Umidade do Solo (%)',
+          data: dataFromBackend.umidadesolos,
+          borderColor: 'rgba(3, 38, 3, 1)',
+          backgroundColor: 'rgba(3, 38, 3, 0.5)'
+        }]
+      }
+    });
+  </script>
+  
+  
+  <nav class="nav-bottom">
+    <div class="container">
+      <a href="{{ url_for('home.index') }}" class="btn w-100">
+        <i class="fa-solid fa-house fa-xl"></i>
+      </a>
+      <div class="w-100">
+      </div>
+      <a href="{{ url_for('dashboard.dashboard') }}" class="btn btn-center-nav-bottom">
+        <i class="fa-solid fa-chart-simple fa-xl"></i>
+      </a>
+      <a href="{{ url_for('auth.login') }}" class="btn w-100">
+        <i class="fa-solid fa-user fa-xl"></i>
+      </a>
+    </div>
+  </nav>
+  
+  {% endblock %}

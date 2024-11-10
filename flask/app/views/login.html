@@ -1,0 +1,35 @@
+{% extends "templates/layout.html" %} 
+{% block title %}Login - Broto Fácil{% endblock %} 
+{% block content %}
+
+<div class="d-flex justify-content-center align-items-center vh-100">
+  <div class="container p-4" style="max-width: 400px;">
+    <h1 class="title">Login</h1>
+    <form method="POST" action="">
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        {{ form.username.label(class_="form-label") }} 
+        {{ form.username(class_="form-control", size=32) }} 
+        {% for error in form.username.errors %}
+        <span class="text-danger">[{{ error }}]</span>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.password.label(class_="form-label") }} 
+        {{ form.password(class_="form-control", size=32) }} 
+        {% for error in form.password.errors %}
+        <span class="text-danger">[{{ error }}]</span>
+        {% endfor %}
+      </div>
+
+      <div class="form-group mt-4 d-flex justify-content-between text-center">
+        <a class="btn btn-second" href="{{url_for('auth.register')}}">Registrar</a>
+        {{ form.submit(class_="btn btn-custom") }}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

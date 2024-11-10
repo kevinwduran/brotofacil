@@ -1,0 +1,21 @@
+
+
+.dashboard {
+    width: 90vw;
+    margin: 2rem 0;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    overflow: hidden;
+    padding: 1rem;
+}
+
+.chart {
+    height: 100px;
+  }
+
+.chart-big {
+    text-align: center;
+    max-height: 400px;
+}
